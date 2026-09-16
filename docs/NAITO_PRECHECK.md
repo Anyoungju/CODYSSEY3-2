@@ -1,4 +1,4 @@
-# 네이토 사전평가 운영 기록
+# 네이토 사전평가 기록
 
 ## 평가 대상
 
@@ -8,52 +8,29 @@
 - 저장소: <https://github.com/Anyoungju/CODYSSEY3-2>
 - 브랜치: `main`
 
-## 1차 사전 점검 결과
+## 시도 1
 
-2026-09-16에 평가 화면에서 과정·주제·M1-2를 선택했다. 다만 프로젝트 URL 선택 창에 등록된 URL이 없어 실제 네이토 평가 요청은 시작되지 않았다. 따라서 점수나 PASS/FAIL 결과는 아직 생성되지 않았으며, 이 문서는 사실과 다른 평가 결과를 기록하지 않는다.
+2026-09-16에 `https://github.com/Anyoungju/CODYSSEY3-2`의 `main` 브랜치를 M1-2 평가 대상으로 저장하고 사전평가를 시작했다.
 
-### 확인된 차단 조건
+- 시도 1: GitHub 파일 20개와 평가 대상 15개 파일까지 확인한 뒤 `AI_PRE_EVAL_COPA_ERROR`로 종료됐다. 네이토 AI 호출 오류로 표시됐으며, 저장소 코드에 관한 피드백은 생성되지 않았다.
+- 시도 2: 파일 목록 20개를 확인하고 18개 파일을 대상으로 마지막 분석 단계를 처리 중이다.
 
-`프로젝트 URL → URL 찾기` 목록이 비어 있었다. 코디세이에 GitHub 저장소 URL을 먼저 등록해야 네이토가 평가 대상을 선택할 수 있다.
+서비스 오류는 제품 코드의 결함으로 기록하지 않는다. 점수와 항목별 피드백이 표시될 때에만 그 근거를 코드 또는 문서 변경에 연결한다.
 
-### 다음 실행 전 준비
+## 결과 확인과 재연결
 
-1. 코디세이 평가 요청 화면에서 GitHub URL 등록 절차를 완료한다.
-2. 목록에서 `https://github.com/Anyoungju/CODYSSEY3-2`와 `main`을 선택한다.
-3. 아래 자동화 명령으로 새 평가를 단 한 번 시작한다.
+새 시도는 한 번만 시작한다. 결과가 처리 중일 때는 아래 명령으로 같은 시도에 다시 연결한다.
 
 ```powershell
 python tools/naito_precheck.py `
-  --repository-url https://github.com/Anyoungju/CODYSSEY3-2 `
-  --branch main --start --timeout 300 `
+  --wait --timeout 300 `
   --output docs/naito/attempt-1.json
 ```
 
-결과가 진행 중이면 `--start`를 반복하지 않는다. 다음 명령으로 같은 평가에 다시 연결한다.
+새 평가가 필요할 때만 `--repository-url`, `--branch`, `--start`를 함께 쓴다.
 
-```powershell
-python tools/naito_precheck.py --wait --timeout 300 `
-  --output docs/naito/attempt-1.json
-```
-
-## 재사용 가능한 자동화 도구
-
-[`tools/naito_precheck.py`](../tools/naito_precheck.py)는 외부 패키지 없이 동작하는 독립형 CDP 도구다.
-
-- `--repository-url`, `--branch`: 평가 대상 선택
-- 기본 조회: 기존 결과를 소비 없이 JSON/Markdown으로 내보내기
-- `--start`: 새 네이토 평가 시작 및 완료 대기
-- `--wait`: 기존 진행 중 평가 재연결
-- `--output`: 같은 이름의 `.json`과 `.md` 결과 생성
+`tools/naito_precheck.py`는 외부 패키지 없이 동작하며, 기본 실행은 결과 조회만 한다. `--start`는 새 평가를 시작하고, `--wait`는 진행 중인 평가를 다시 붙잡는다. `--output`을 지정하면 JSON과 같은 이름의 Markdown 파일을 함께 만든다.
 
 Chrome은 원격 디버깅을 루프백 `127.0.0.1:9222`로 열고 코디세이에 로그인된 상태여야 한다. 이 작업 공간에서는 상위 폴더의 `scripts\open_codyssey.cmd`로 인증 세션을 연다.
 
-## 평가 결과 반영 기준
-
-실제 결과가 생기면 `docs/naito/attempt-N.json`을 원본으로 보관하고, 이 문서에 아래 형식으로 반영한다.
-
-| 평가 항목 | 네이토 근거/부족한 점 | 코드·문서 반영 위치 | 재평가 상태 |
-| --- | --- | --- | --- |
-| 예: CORS | 실제 결과에서 발췌 | `backend/app/main.py`, `README.md` | 대기 |
-
-PASS 항목도 근거와 권고를 기록하되, 평가 결과에 없는 주장을 추가하지 않는다.
+원본 결과는 `docs/naito/attempt-N.json`에 남기고, 수정한 내용만 이 문서에 짧게 적는다. PASS 항목도 참고할 만한 권고가 있을 때만 기록한다.

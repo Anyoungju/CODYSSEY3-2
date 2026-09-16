@@ -1,14 +1,17 @@
-# DataPulse AI
+# DataPulse
 
-Firestore에 저장한 시계열 데이터를 분석하고, 그 요약을 AI 시스템 프롬프트에 주입해 맞춤 답변을 제공하는 서비스입니다.
+매일 쌓이는 값을 한곳에 모아 보고, 필요한 순간에 질문할 수 있는 작은 데이터 노트입니다. 예시는 서울의 일별 기온이지만 `date`, `value`, `memo` 구조라면 운동 시간이나 매출처럼 다른 기록에도 그대로 쓸 수 있습니다.
 
-> 배포 URL은 Render/Vercel 배포가 끝난 뒤 이 문서에 기록합니다. Render 무료 인스턴스는 첫 요청에서 잠시 깨어나는 시간이 필요할 수 있습니다.
+기록은 Firestore에 두고, 질문을 보낼 때만 기간·평균·최고/최저·최근 흐름을 계산해 답변의 참고 정보로 보냅니다. 원본 전체를 매번 전달하지 않기 때문에 대화가 길어져도 필요한 맥락을 짧게 유지할 수 있습니다.
 
-## 기술
+## 구성
 
-- Backend: Python 3.10+, FastAPI, Pydantic, Firestore, OpenAI
-- Frontend: Vanilla HTML/CSS/JavaScript
-- Deploy: Render (API), Vercel (static frontend)
+| 구역 | 역할 |
+| --- | --- |
+| `backend/` | FastAPI API, Firestore 저장소, 요약 계산, OpenAI 호출 |
+| `frontend/` | 채팅, 데이터 입력·삭제, 대화 목록을 제공하는 정적 화면 |
+| `backend/scripts/seed_sample_data.py` | 2024년 일별 샘플 366개 생성 |
+| `tools/naito_precheck.py` | 네이토 사전평가 결과를 JSON/Markdown으로 보관하는 도구 |
 
 ## 로컬 실행
 
@@ -21,34 +24,34 @@ Copy-Item .env.example .env
 uvicorn app.main:app --reload
 ```
 
-프론트는 `frontend`에서 정적 서버로 실행합니다. API 문서는 `http://127.0.0.1:8000/docs`입니다.
+API 문서는 `http://127.0.0.1:8000/docs`에서 확인할 수 있습니다. 프론트는 별도 터미널에서 실행합니다.
 
 ```powershell
 cd frontend
 python -m http.server 5500
 ```
 
-Firestore 연결 뒤 최초 데이터는 다음 명령으로 채웁니다. 이 스크립트는 2024년 일별 기온 형태의 결정적 데이터 366개를 만듭니다.
+Firestore 연결 뒤 처음 한 번만 샘플 데이터를 넣습니다.
 
 ```powershell
 python scripts/seed_sample_data.py
 ```
 
-## 환경 변수
+## 설정값
 
 | Name | Description |
 | --- | --- |
-| `OPENAI_API_KEY` | 서버 전용 OpenAI API key |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | 서비스 계정 JSON 전체 문자열 |
-| `ALLOWED_ORIGINS` | 쉼표로 구분한 프론트 출처 |
-| `OPENAI_MODEL` | 기본값 `gpt-4o-mini` |
-| `API_BASE_URL` | Vercel의 백엔드 URL |
+| `OPENAI_API_KEY` | 서버에서만 사용하는 OpenAI 키 |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase 서비스 계정 JSON 전체 |
+| `ALLOWED_ORIGINS` | 접속을 허용할 프론트 주소 목록 |
+| `OPENAI_MODEL` | 생략하면 `gpt-4o-mini` |
+| `API_BASE_URL` | 프론트가 호출할 API 주소 |
 
-키는 커밋하지 않습니다. Firestore는 `data`, `conversations` 컬렉션을 사용합니다.
+`.env`와 서비스 계정 파일은 커밋하지 않습니다. Firestore에는 `data`, `conversations` 두 컬렉션만 사용합니다.
 
-## API
+## API 요약
 
-| Method | Path | Purpose |
+| Method | Path | 설명 |
 | --- | --- | --- |
 | POST / GET | `/api/data` | 시계열 데이터 추가·목록 |
 | PUT / DELETE | `/api/data/{id}` | 데이터 수정·삭제 |
@@ -57,21 +60,20 @@ python scripts/seed_sample_data.py
 | GET / DELETE | `/api/conversations/{id}` | 특정 대화 불러오기·삭제 |
 | POST | `/api/chat` | 요약 컨텍스트를 주입한 AI 답변 및 자동 저장 |
 
-## 컨텍스트 주입 흐름
+## 답변이 만들어지는 과정
 
 ```text
 Firestore data → summary service → system prompt → OpenAI → conversation 저장
 ```
 
-AI 모델이 개인 데이터를 미리 학습하는 방식이 아닙니다. 요청 시점에 기간·통계·추세를 만든 뒤 시스템 프롬프트에 포함하므로, 키를 노출하지 않으면서 저장된 데이터 근거의 답변을 제공합니다.
+모델이 개인 데이터를 미리 기억하는 방식은 아닙니다. 질문이 들어올 때 기간과 통계를 만들어 함께 전달하고, 답변과 질문은 다시 대화 기록에 저장합니다.
 
-## 배포
+## 배포 메모
 
-1. Render에서 `backend`를 Root Directory로 지정하고 Build Command는 `pip install -r requirements.txt`, Start Command는 `uvicorn app.main:app --host 0.0.0.0 --port $PORT`로 설정합니다.
-2. Render 환경 변수에 `OPENAI_API_KEY`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `OPENAI_MODEL`, `ALLOWED_ORIGINS`를 등록합니다.
-3. Vercel에서 `frontend`를 배포하고 `config.js`의 `API_BASE_URL`을 Render URL로 바꿉니다. 운영에서는 해당 값을 Vercel 환경 변수로 빌드 시 주입하도록 설정합니다.
-4. Render URL의 `/docs`에서 Swagger UI를 확인합니다. 무료 인스턴스는 최초 요청에서 잠시 지연될 수 있으므로 화면에 재시도 가능한 오류 문구를 제공합니다.
+Render에서는 `backend`를 Root Directory로 잡고 `pip install -r requirements.txt`로 빌드합니다. 시작 명령은 `uvicorn app.main:app --host 0.0.0.0 --port $PORT`입니다. Vercel에는 `frontend`를 올린 뒤 `config.js`의 `API_BASE_URL`을 Render 주소로 바꿉니다.
 
-## 네이토 사전평가
+Render 무료 인스턴스는 첫 요청이 느릴 수 있습니다. `/docs`가 열리는지 먼저 확인한 뒤 화면을 테스트하면 원인 구분이 쉽습니다.
+
+## 사전 점검
 
 M1-2 평가 대상과 재사용 가능한 CDP 자동화 도구, 실행 결과 기록 방식은 [네이토 사전평가 운영 기록](docs/NAITO_PRECHECK.md)에 정리했습니다.
