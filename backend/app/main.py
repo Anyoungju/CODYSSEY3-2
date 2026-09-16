@@ -38,6 +38,12 @@ def get_summary() -> dict:
     return build_summary(list_data())
 
 
+@app.get("/api/data/statistics")
+def get_statistics() -> dict:
+    """Return extended figures used by the dashboard visualization."""
+    return build_summary(list_data())
+
+
 @app.put("/api/data/{item_id}")
 def put_data(item_id: str, payload: DataInput) -> dict:
     result = update_data(item_id, normalized(payload))

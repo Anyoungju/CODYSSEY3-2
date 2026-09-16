@@ -13,6 +13,7 @@ class SummaryTest(unittest.TestCase):
         self.assertEqual(result["count"], 3)
         self.assertEqual(result["metrics"]["average"], 4)
         self.assertEqual(result["extremes"]["max_date"], "2024-01-03")
+        self.assertIn("standard_deviation", result["metrics"])
 
     def test_empty_summary_is_safe(self) -> None:
         self.assertEqual(build_summary([])["count"], 0)

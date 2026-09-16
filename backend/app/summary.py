@@ -1,6 +1,6 @@
 """Pure time-series summary logic."""
 from __future__ import annotations
-from statistics import mean
+from statistics import mean, median, pstdev
 
 
 def build_summary(records: list[dict]) -> dict:
@@ -14,4 +14,4 @@ def build_summary(records: list[dict]) -> dict:
     delta = mean(recent) - mean(previous) if previous else 0
     trend = "상승" if delta > 0.01 else "하락" if delta < -0.01 else "유지"
     high, low = max(items, key=lambda x: x["value"]), min(items, key=lambda x: x["value"])
-    return {"period": f"{items[0]['date']} ~ {items[-1]['date']}", "count": len(items), "metrics": {"average": round(mean(values), 2), "max": high["value"], "min": low["value"], "recent_7_day_average": round(mean(recent), 2)}, "extremes": {"max_date": high["date"], "min_date": low["date"]}, "trend": f"{trend} (최근 7일 평균 변화 {delta:+.2f})"}
+    return {"period": f"{items[0]['date']} ~ {items[-1]['date']}", "count": len(items), "metrics": {"average": round(mean(values), 2), "median": round(median(values), 2), "max": high["value"], "min": low["value"], "range": round(max(values) - min(values), 2), "standard_deviation": round(pstdev(values), 2), "recent_7_day_average": round(mean(recent), 2)}, "extremes": {"max_date": high["date"], "min_date": low["date"]}, "trend": f"{trend} (최근 7일 평균 변화 {delta:+.2f})"}
