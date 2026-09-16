@@ -71,3 +71,7 @@ AI 모델이 개인 데이터를 미리 학습하는 방식이 아닙니다. 요
 2. Render 환경 변수에 `OPENAI_API_KEY`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `OPENAI_MODEL`, `ALLOWED_ORIGINS`를 등록합니다.
 3. Vercel에서 `frontend`를 배포하고 `config.js`의 `API_BASE_URL`을 Render URL로 바꿉니다. 운영에서는 해당 값을 Vercel 환경 변수로 빌드 시 주입하도록 설정합니다.
 4. Render URL의 `/docs`에서 Swagger UI를 확인합니다. 무료 인스턴스는 최초 요청에서 잠시 지연될 수 있으므로 화면에 재시도 가능한 오류 문구를 제공합니다.
+
+## 네이토 사전평가
+
+M1-2 평가 대상과 재사용 가능한 CDP 자동화 도구, 실행 결과 기록 방식은 [네이토 사전평가 운영 기록](docs/NAITO_PRECHECK.md)에 정리했습니다.
